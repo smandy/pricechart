@@ -251,5 +251,4 @@ fn make_prices() -> (Option<OHLC>, Vec<(i32, Option<OHLC>), Global>) {
             }
         }
     }
-    //return (all, prices);
 }
