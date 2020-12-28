@@ -54,29 +54,6 @@ impl RecvPrice<f64> for Option<OHLC> {
     }
 }
 
-fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_height: u32) -> Rect {
-    let wr = rect_width as f32 / cons_width as f32;
-    let hr = rect_height as f32 / cons_height as f32;
-
-    let (w, h) = if wr > 1f32 || hr > 1f32 {
-        if wr > hr {
-            println!("Scaling down! The text will look worse!");
-            let h = (rect_height as f32 / wr) as i32;
-            (cons_width as i32, h)
-        } else {
-            println!("Scaling down! The text will look worse!");
-            let w = (rect_width as f32 / hr) as i32;
-            (w, cons_height as i32)
-        }
-    } else {
-        (rect_width as i32, rect_height as i32)
-    };
-
-    let cx = (WIDTH as i32 - w) / 2;
-    let cy = (HEIGHT as i32 - h) / 2;
-    rect!(cx, cy, w, h)
-}
-
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     //let ev = sdl_context.event().unwrap();
@@ -95,12 +72,12 @@ fn main() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     let (all_prices, prices) = make_prices();
 
-    println!("allprices is {:?}", all_prices);
+    /*    println!("allprices is {:?}", all_prices);
     println!(
         "prices is {:#?} {:#?}",
         &prices[..5],
         &prices[prices.len() - 5..]
-    );
+    );*/
 
     let mut last_event = None;
 
@@ -148,7 +125,7 @@ fn main() -> Result<(), String> {
 
         let yrange = all_high - all_low;
 
-        let mut font =
+        let font =
             ttf_context.load_font(Path::new("/usr/share/fonts/JetBrainsMono-Medium.ttf"), 12)?;
         let texture_creator = canvas.texture_creator();
 
@@ -172,13 +149,13 @@ fn main() -> Result<(), String> {
 
         let s1 = &std::format!("ah={} al={}", all_high, all_low);
         let s2 = &std::format!("yrange={}", yrange);
-        draw_string(20, 20, s1);
-        draw_string(20, 40, s2);
+        draw_string(20, 20, s1)?;
+        draw_string(20, 40, s2)?;
 
         if let Some(event) = &last_event {
             //println!("Last event is {:#?}", event);
             let s = &std::format!("evt is {:#?}", event);
-            draw_string(20, 60, s);
+            draw_string(20, 60, s)?;
         }
 
         for tmp in &prices {
@@ -213,7 +190,7 @@ fn main() -> Result<(), String> {
                 );*/
 
                 canvas.set_draw_color(white);
-                canvas.draw_line(s, f);
+                canvas.draw_line(s, f)?;
 
                 {
                     let rect = Rect::new(
@@ -225,13 +202,10 @@ fn main() -> Result<(), String> {
                     canvas.set_draw_color(if close > open { green } else { red });
                     canvas.fill_rect(rect)?;
                     canvas.set_draw_color(white);
-                    canvas.draw_rect(rect);
+                    canvas.draw_rect(rect)?;
                 }
             }
         }
-
-        let padding = 64;
-
         canvas.present();
     }
 
@@ -246,20 +220,9 @@ fn make_prices() -> (Option<OHLC>, Vec<(i32, Option<OHLC>), Global>) {
     let mut ohlc: Option<OHLC> = None;
     let mut all = None;
     println!("Ohlc is {:?}", ohlc);
-    let mut tix = 0;
     let mut bar = 0;
 
     let ticks = &[-0.01, -0.01, 0.0, 0.0, 0.0, 0.01, 0.01];
-
-    //impl Eq for f64 {}
-
-    fn min(x: f64, y: f64) -> f64 {
-        if x < y {
-            x
-        } else {
-            y
-        }
-    }
 
     fn max(x: f64, y: f64) -> f64 {
         if x > y {
