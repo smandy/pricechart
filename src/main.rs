@@ -83,19 +83,28 @@ fn main() -> Result<(), String> {
     let (all_prices, prices) = make_prices();
 
     let mut last_event = None;
-    let mut zoomx = ZOOM_FACT;
-    let mut zoomy = ZOOM_FACT;
+    let mut zoomx = 1.0;
+    let mut zoomy = 1.0;
     let OHLC {
         high: all_high,
         low: all_low,
         ..
     } = all_prices.clone().unwrap();
 
-    let mut cx: f64 = prices.len() as f64 / 2.0;
-    let mut cy: f64 = (all_high + all_low) / 2.0;
+    let height = HEIGHT as f64;
+    let width = WIDTH as f64;
 
-    let mut dx: i32 = 0;
-    let mut dy: i32 = 0;
+    let price_range = all_high - all_low;
+
+    let mut my = height / -price_range;
+    // Solve y = mx + c for HEIGHT = (HEIGHT / (all_low - all_high) ) * all_high + c
+    let mut cy = height * all_high / price_range;
+
+    let mut mx = width / prices.len() as f64;
+    let mut cx = 0.0;
+
+    //let mut dx: i32 = 0;
+    //let mut dy: i32 = 0;
 
     #[derive(Debug)]
     enum MouseState {
@@ -147,16 +156,16 @@ fn main() -> Result<(), String> {
                     } => {
                         zoomx = max(
                             1.0,
-                            initial_zoom_x + 10.0 * (x as f64 - cx as f64) / WIDTH as f64,
+                            initial_zoom_x + ZOOM_FACT * (x as f64 - cx as f64) / WIDTH as f64,
                         );
                         zoomy = max(
                             1.0,
-                            initial_zoom_y + 10.0 * (y as f64 - cy as f64) / HEIGHT as f64,
+                            initial_zoom_y + ZOOM_FACT * (cy as f64 - y as f64) / HEIGHT as f64,
                         )
                     }
                     MouseState::Panning { x: px, y: py } => {
-                        dx = x - px;
-                        dy = y - py;
+                        cx = (x - px) as f64;
+                        cy = (y - py) as f64
                     }
                     MouseState::Up => {}
                 },
@@ -188,8 +197,8 @@ fn main() -> Result<(), String> {
                     ..
                 } => {
                     mouse_state = MouseState::Panning {
-                        x: x - dx,
-                        y: y - dy,
+                        x: x - cx as i32,
+                        y: y - cy as i32,
                     }
                 }
                 _ => {
@@ -217,6 +226,7 @@ fn main() -> Result<(), String> {
             ttf_context.load_font(Path::new("/usr/share/fonts/JetBrainsMono-Medium.ttf"), 12)?;
         let texture_creator = canvas.texture_creator();
 
+        // Simple scaling
         for tmp in &prices {
             if let (
                 i,
@@ -228,28 +238,10 @@ fn main() -> Result<(), String> {
                 }),
             ) = tmp
             {
-                let scale_x = |x: i32| {
-                    //let cx = prices.len() as f64 / 2.0;
-                    let rx = prices.len() as f64;
-                    let ox = (x as f64 - cx) / rx;
-                    let fw = WIDTH as f64;
-                    let ret = dx + ((fw / 2.0) + fw * ox * zoomx) as i32;
-                    //return (f * WIDTH as f64) as i32;
-                    return ret;
-                };
+                let scale_x = |x: i32| -> i32 { (mx * (x as f64) + cx) as i32 };
 
-                let scale_y = |px: f64| {
-                    //let range = all_high - all_how;
-                    let ry = all_high - all_low;
-                    //let cy = (all_high + all_low) / 2.0;
-                    let oy = (px - cy) / ry;
-                    //let f = (all_high - px) / yrange;
-                    let ih = HEIGHT as f64;
-                    let ret = dy + ((ih / 2.0) + ih * oy * zoomy) as i32;
-                    //println!("scale {} -> {} oy={} cy={}", px, ret, oy, cy);
-                    return ret;
-                    //low + dif * range;
-                };
+                let scale_y = |px: f64| -> i32 { (my * px + cy) as i32 };
+
                 let x = scale_x(*i);
                 let o = scale_y(*open);
                 let h = scale_y(*high);
@@ -306,7 +298,7 @@ fn main() -> Result<(), String> {
         draw_string(500, 20, s5)?;
 
         let s6 = &std::format!("mouse_state={:?}", mouse_state);
-        draw_string(500, 40, s6)?;
+        draw_string(500, 60, s6)?;
 
         canvas.present();
     }
