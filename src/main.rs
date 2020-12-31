@@ -20,6 +20,14 @@ macro_rules! rect(
     )
 );
 
+fn max(x: f64, y: f64) -> f64 {
+    if x > y {
+        x
+    } else {
+        y
+    }
+}
+
 #[derive(Debug, Clone)]
 struct OHLC {
     open: f64,
@@ -137,8 +145,14 @@ fn main() -> Result<(), String> {
                         initial_zoom_x,
                         initial_zoom_y,
                     } => {
-                        zoomx = initial_zoom_x + 10.0 * (x as f64 - cx as f64) / WIDTH as f64;
-                        zoomy = initial_zoom_y + 10.0 * (y as f64 - cy as f64) / HEIGHT as f64;
+                        zoomx = max(
+                            1.0,
+                            initial_zoom_x + 10.0 * (x as f64 - cx as f64) / WIDTH as f64,
+                        );
+                        zoomy = max(
+                            1.0,
+                            initial_zoom_y + 10.0 * (y as f64 - cy as f64) / HEIGHT as f64,
+                        )
                     }
                     MouseState::Panning { x: px, y: py } => {
                         dx = x - px;
@@ -312,14 +326,6 @@ fn make_prices() -> (Option<OHLC>, Vec<(i32, Option<OHLC>), Global>) {
 
     let ticks = &[-0.01, -0.01, 0.0, 0.0, 0.0, 0.01, 0.01];
 
-    fn max(x: f64, y: f64) -> f64 {
-        if x > y {
-            x
-        } else {
-            y
-        }
-    }
-
     let mut tix = 0;
     loop {
         tix += 1;
@@ -334,7 +340,7 @@ fn make_prices() -> (Option<OHLC>, Vec<(i32, Option<OHLC>), Global>) {
             bar += 1;
             prices.push((bar, ohlc));
             ohlc = None;
-            if prices.len() == 50 {
+            if prices.len() == 200 {
                 return (all, prices);
             }
         }
