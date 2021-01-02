@@ -98,10 +98,10 @@ fn main() -> Result<(), String> {
 
     let mut my = height / -price_range;
     // Solve y = mx + c for HEIGHT = (HEIGHT / (all_low - all_high) ) * all_high + c
-    let mut cy = height * all_high / price_range;
+    let mut cy: i32 = (height * all_high / price_range) as i32;
 
     let mut mx = width / prices.len() as f64;
-    let mut cx = 0.0;
+    let mut cx: i32 = 0;
 
     //let mut dx: i32 = 0;
     //let mut dy: i32 = 0;
@@ -110,8 +110,8 @@ fn main() -> Result<(), String> {
     enum MouseState {
         Up,
         Zooming {
-            x: i32,
-            y: i32,
+            anchor_x: f64,
+            anchor_y: f64,
             initial_zoom_x: f64,
             initial_zoom_y: f64,
         },
@@ -141,6 +141,9 @@ fn main() -> Result<(), String> {
 
     'mainloop: loop {
         for event in sdl_context.event_pump()?.poll_iter() {
+            let inv_x = |x: i32| -> f64 { (x - cx) as f64 / mx };
+            let inv_y = |y: i32| -> f64 { (y - cy) as f64 / my };
+
             match event {
                 Event::KeyDown {
                     keycode: Some(Keycode::Escape),
@@ -149,23 +152,28 @@ fn main() -> Result<(), String> {
                 | Event::Quit { .. } => break 'mainloop,
                 Event::MouseMotion { x, y, .. } => match mouse_state {
                     MouseState::Zooming {
-                        x: cx,
-                        y: cy,
+                        anchor_x,
+                        anchor_y,
                         initial_zoom_x,
                         initial_zoom_y,
                     } => {
-                        zoomx = max(
-                            1.0,
-                            initial_zoom_x + ZOOM_FACT * (x as f64 - cx as f64) / WIDTH as f64,
-                        );
-                        zoomy = max(
-                            1.0,
-                            initial_zoom_y + ZOOM_FACT * (cy as f64 - y as f64) / HEIGHT as f64,
-                        )
+                        // Need to transform mx
+
+                        let px = inv_x(x);
+                        let py = inv_y(y);
+
+                        let new_mx = ZOOM_FACT * (px - anchor_x) / prices.len() as f64;
+                        let new_my = ZOOM_FACT * (py - anchor_y) / price_range;
+
+                        cx = cx + (px * (mx - new_mx)) as i32;
+                        cy = cy + (py * (my - new_my)) as i32;
+
+                        mx = new_mx;
+                        my = new_my;
                     }
                     MouseState::Panning { x: px, y: py } => {
-                        cx = (x - px) as f64;
-                        cy = (y - py) as f64
+                        cx = x - px;
+                        cy = y - py;
                     }
                     MouseState::Up => {}
                 },
@@ -184,8 +192,8 @@ fn main() -> Result<(), String> {
                     ..
                 } => {
                     mouse_state = MouseState::Zooming {
-                        x,
-                        y,
+                        anchor_x: inv_x(x),
+                        anchor_y: inv_y(y),
                         initial_zoom_x: zoomx,
                         initial_zoom_y: zoomy,
                     }
@@ -216,15 +224,15 @@ fn main() -> Result<(), String> {
         let green = Color::RGBA(0, 150, 0, 255);
 
         let half_tickwidth = {
-            let ret = (zoomx * 0.45 * WIDTH as f64) / prices.len() as f64;
+            let ret = mx * 0.45;
             ret as u32
         };
-
-        //let yrange = all_high - all_low;
 
         let font =
             ttf_context.load_font(Path::new("/usr/share/fonts/JetBrainsMono-Medium.ttf"), 12)?;
         let texture_creator = canvas.texture_creator();
+        let scale_x = |x: i32| -> i32 { (mx * (x as f64)) as i32 + cx };
+        let scale_y = |px: f64| -> i32 { (my * px) as i32 + cy };
 
         // Simple scaling
         for tmp in &prices {
@@ -238,10 +246,6 @@ fn main() -> Result<(), String> {
                 }),
             ) = tmp
             {
-                let scale_x = |x: i32| -> i32 { (mx * (x as f64) + cx) as i32 };
-
-                let scale_y = |px: f64| -> i32 { (my * px + cy) as i32 };
-
                 let x = scale_x(*i);
                 let o = scale_y(*open);
                 let h = scale_y(*high);
