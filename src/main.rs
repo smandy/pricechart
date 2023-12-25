@@ -7,7 +7,6 @@ use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::TextureQuery;
-use std::alloc::Global;
 use std::path::Path;
 
 const WIDTH: u32 = 960;
@@ -310,7 +309,7 @@ fn main() -> Result<(), String> {
     Ok(())
 }
 
-fn make_prices() -> (Option<OHLC>, Vec<(i32, Option<OHLC>), Global>) {
+fn make_prices() -> (Option<OHLC>, Vec<(i32, Option<OHLC>)>) {
     let mut price = 100.0;
     let mut rng = rand::thread_rng();
     let mut prices = Vec::new();
