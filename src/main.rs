@@ -82,8 +82,8 @@ fn main() -> Result<(), String> {
     let (all_prices, prices) = make_prices();
 
     let mut last_event = None;
-    let mut zoomx = 1.0;
-    let mut zoomy = 1.0;
+    let zoomx = 1.0;
+    let zoomy = 1.0;
     let OHLC {
         high: all_high,
         low: all_low,
@@ -111,8 +111,8 @@ fn main() -> Result<(), String> {
         Zooming {
             anchor_x: f64,
             anchor_y: f64,
-            initial_zoom_x: f64,
-            initial_zoom_y: f64,
+            //initial_zoom_x: f64,
+            //initial_zoom_y: f64,
         },
         Panning {
             x: i32,
@@ -153,8 +153,6 @@ fn main() -> Result<(), String> {
                     MouseState::Zooming {
                         anchor_x,
                         anchor_y,
-                        initial_zoom_x,
-                        initial_zoom_y,
                     } => {
                         // Need to transform mx
 
@@ -193,8 +191,6 @@ fn main() -> Result<(), String> {
                     mouse_state = MouseState::Zooming {
                         anchor_x: inv_x(x),
                         anchor_y: inv_y(y),
-                        initial_zoom_x: zoomx,
-                        initial_zoom_y: zoomy,
                     }
                 }
                 Event::MouseButtonDown {
@@ -228,7 +224,7 @@ fn main() -> Result<(), String> {
         };
 
         let font =
-            ttf_context.load_font(Path::new("/usr/share/fonts/JetBrainsMono-Medium.ttf"), 12)?;
+            ttf_context.load_font(Path::new("/usr/share/fonts/TTF/JetBrainsMono-Medium.ttf"), 12)?;
         let texture_creator = canvas.texture_creator();
         let scale_x = |x: i32| -> i32 { (mx * (x as f64)) as i32 + cx };
         let scale_y = |px: f64| -> i32 { (my * px) as i32 + cy };
