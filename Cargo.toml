@@ -13,3 +13,16 @@ float-ord = "0.2.0"
 [dependencies.sdl2]
 version = "0.34.3"
 features = ["gfx", "ttf"]
+
+
+[lib]
+name = "my_project"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main1"
+path = "src/main1.rs"
+
+[[bin]]
+name = "main2"
+path = "src/main2.rs"
