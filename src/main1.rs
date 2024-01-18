@@ -1,4 +1,3 @@
-
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
@@ -7,9 +6,13 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::TextureQuery;
 use std::path::Path;
 
-
 use lib::*;
-use lib::make_prices;
+
+macro_rules! rect(
+    ($x:expr, $y:expr, $w:expr, $h:expr) => (
+        Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
+    );
+    );
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -47,7 +50,7 @@ fn main() -> Result<(), String> {
     // Solve y = mx + c for HEIGHT = (HEIGHT / (all_low - all_high) ) * all_high + c
     let mut cy: i32 = (height * all_high / price_range) as i32;
     let mut cx: i32 = 0;
-    
+
     let mut mx = width / prices.len() as f64;
 
     //let mut dx: i32 = 0;
@@ -98,10 +101,7 @@ fn main() -> Result<(), String> {
                 }
                 | Event::Quit { .. } => break 'mainloop,
                 Event::MouseMotion { x, y, .. } => match mouse_state {
-                    MouseState::Zooming {
-                        anchor_x,
-                        anchor_y,
-                    } => {
+                    MouseState::Zooming { anchor_x, anchor_y } => {
                         // Need to transform mx
 
                         let px = inv_x(x);
@@ -171,8 +171,10 @@ fn main() -> Result<(), String> {
             ret as u32
         };
 
-        let font =
-            ttf_context.load_font(Path::new("/usr/share/fonts/TTF/JetBrainsMono-Medium.ttf"), 12)?;
+        let font = ttf_context.load_font(
+            Path::new("/usr/share/fonts/TTF/JetBrainsMono-Medium.ttf"),
+            12,
+        )?;
         let texture_creator = canvas.texture_creator();
         let scale_x = |x: i32| -> i32 { (mx * (x as f64)) as i32 + cx };
         let scale_y = |px: f64| -> i32 { (my * px) as i32 + cy };
